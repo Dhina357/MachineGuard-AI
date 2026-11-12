@@ -22,7 +22,7 @@ def train(input_path: Path, output_path: Path, target_cap: int = 125) -> dict:
     max_cycles = frame.groupby("unit_nr")["cycle"].max()
     frame["rul"] = frame["unit_nr"].map(max_cycles) - frame["cycle"]
     frame["rul"] = frame["rul"].clip(upper=target_cap)
-    X, y, groups = frame[FEATURE_COLUMNS], frame["rul"], frame["unit_nr"]
+    X, y, groups = frame[list(FEATURE_COLUMNS)], frame["rul"], frame["unit_nr"]
     split = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
     train_idx, test_idx = next(split.split(X, y, groups))
     model = RandomForestRegressor(n_estimators=250, min_samples_leaf=2, max_features=0.8,
