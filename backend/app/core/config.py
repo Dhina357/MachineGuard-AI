@@ -6,12 +6,17 @@ class Settings(BaseSettings):
     app_name: str = "MachineGuard AI"
     database_url: str = "sqlite:///./machineguard.db"
     model_path: str = "../models/failure_model.joblib"
+    rul_model_path: str = "../models/rul_model.joblib"
     cors_origins: str = "http://localhost:5173"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def model_file(self) -> Path:
         return Path(self.model_path).expanduser().resolve()
+
+    @property
+    def rul_model_file(self) -> Path:
+        return Path(self.rul_model_path).expanduser().resolve()
 
     @property
     def allowed_origins(self) -> list[str]:
