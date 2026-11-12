@@ -15,7 +15,7 @@ from app.ml.rul import FEATURE_COLUMNS
 RAW_COLUMNS = ["unit_nr", "cycle", "setting_1", "setting_2", "setting_3"] + [f"s_{i}" for i in range(1, 22)]
 
 def train(input_path: Path, output_path: Path, target_cap: int = 125) -> dict:
-    frame = pd.read_csv(input_path, sep=r"\\s+", header=None, names=RAW_COLUMNS)
+    frame = pd.read_csv(input_path, sep=r"\s+", header=None, names=RAW_COLUMNS)
     frame = frame.dropna(axis=1, how="all")
     if frame.shape[1] != len(RAW_COLUMNS):
         raise ValueError("Expected a 26-column NASA C-MAPSS FD001 training file")
