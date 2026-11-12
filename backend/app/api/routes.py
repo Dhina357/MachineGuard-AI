@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import Prediction, SensorReading
 from app.ml.predictor import FailurePredictor, risk_level
+from app.ml.rul import RULPredictor
+from app.schemas.rul import RULPredictRequest, RULPredictResponse
 from app.schemas.sensor import MachineSummary, PredictionOut, SensorReadingCreate, SensorReadingOut
 
 router = APIRouter(prefix="/api/v1")
 predictor = FailurePredictor()
+rul_predictor = RULPredictor()
 
 @router.post("/readings", response_model=SensorReadingOut, status_code=201)
 def create_reading(payload: SensorReadingCreate, db: Session = Depends(get_db)):
@@ -28,6 +31,20 @@ def predict(payload: SensorReadingCreate, db: Session = Depends(get_db)):
         risk_level=risk_level(score), predicted_failure=failed, model_source=source)
     db.add(result); db.commit(); db.refresh(result)
     return result
+
+@router.post("/rul/predict", response_model=RULPredictResponse)
+def predict_rul(payload: RULPredictRequest):
+    try:
+        estimate, cap = rul_predictor.predict(payload.cycle, payload.settings, payload.sensors)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return RULPredictResponse(
+        machine_id=payload.machine_id,
+        predicted_rul_cycles=estimate,
+        model_source="nasa_cmapss_fd001_random_forest",
+        target_cap_cycles=cap,
+        warning="Research/demo estimate from NASA C-MAPSS FD001; validate on representative equipment before maintenance decisions."
+    )
 
 @router.get("/predictions", response_model=list[PredictionOut])
 def list_predictions(limit: int = Query(50, ge=1, le=500), db: Session = Depends(get_db)):
